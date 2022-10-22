@@ -1,53 +1,38 @@
-import requests
 import re
-import csv
-from bs4 import BeautifulSoup
 
+#En esta clase lo que queremos hacer es llenar los registros que obtuvimos del URL
+class Data:
 
-def main():
-    # Downloading imdb top 250 movie's data
-    url = 'http://www.imdb.com/chart/top'
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'lxml')
+    def __init__(self, data_info):
+        self.data_info = data_info
+        self.data = None
 
-    movies = soup.select('td.titleColumn')
-    links = [a.attrs.get('href') for a in soup.select('td.titleColumn a')]
-    crew = [a.attrs.get('title') for a in soup.select('td.titleColumn a')]
-    ratings = [b.attrs.get('data-value') for b in soup.select('td.posterColumn span[name=ir]')]
-    votes = [b.attrs.get('data-value') for b in soup.select('td.ratingColumn strong')]
+#Metodo para darle formato a la informacion. Organizarla y limpiarla. 
+    def data_format(self):
+   
+        # create a empty list for storing
+        # movie information
+        list = []
 
-    # create a empty list for storing
-    # movie information
-    list = []
-
-    # Iterating over movies to extract
-    # each movie's details
-    for index in range(0, len(movies)):
+        # Iterating over movies to extract
+        # each movie's details
+        for index in range(0, len(self.data_info.movies)):
         # Separating movie into: 'place',
         # 'title', 'year'
-        movie_string = movies[index].get_text()
-        movie = (' '.join(movie_string.split()).replace('.', ''))
-        movie_title = movie[len(str(index)) + 1:-7]
-        year = re.search('\((.*?)\)', movie_string).group(1)
-        place = movie[:len(str(index)) - (len(movie))]
+            movie_string = self.data_info.movies[index].get_text()
+            movie = (' '.join(movie_string.split()).replace('.', ''))
+            movie_title = movie[len(str(index)) + 1:-7]
+            year = re.search('\((.*?)\)', movie_string).group(1)
+            place = movie[:len(str(index)) - (len(movie))]
 
-        data = {"movie_title": movie_title,
+            data = {"movie_title": movie_title,
                 "year": year,
                 "place": place,
-                "star_cast": crew[index],
-                "rating": ratings[index],
-                "vote": votes[index],
-                "link": links[index],
+                "star_cast": self.data_info.crew[index],
+                "rating": self.data_info.ratings[index],
+                "vote": self.data_info.votes[index],
+                "link": self.data_info.links[index],
                 "preference_key": index % 4 + 1}
-        list.append(data)
+            list.append(data)
+        self.data = list
 
-    fields = ["preference_key", "movie_title", "star_cast", "rating", "year", "place", "vote", "link"]
-    with open("movie_results.csv", "w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=fields)
-        writer.writeheader()
-        for movie in list:
-            writer.writerow({**movie})
-
-
-if __name__ == '__main__':
-    main()
